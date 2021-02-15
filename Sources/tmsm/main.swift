@@ -73,6 +73,7 @@ do {
                       arguments: "-o", "rdonly",
                                  "-s", snapshot,
                                  options.pathname, mountpoint)
+  print(mountpoint)
 }
 catch let error as ExitCode {
   exit(error.rawValue)
@@ -80,12 +81,10 @@ catch let error as ExitCode {
 
 if output.isEmpty
 {
-  print(mountpoint)
   exit(EXIT_SUCCESS)
 }
 else
 {
-  print(mountpoint)
-  print("Failure:", output)
+  print(output.trimming(where: \.isWhitespace))
   exit(EXIT_FAILURE)
 }
