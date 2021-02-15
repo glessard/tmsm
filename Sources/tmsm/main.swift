@@ -11,24 +11,6 @@ public struct tmsmOptions: ParsableCommand
 
 let options = tmsmOptions.parseOrExit()
 
-func launch(_ tool: String, _ arguments: String...) -> (Int32, String)
-{
-  let task = Process()
-  let pipe = Pipe()
-
-  task.launchPath = "/usr/bin/env"
-  task.standardOutput = pipe
-  task.standardError = pipe
-
-  task.arguments = [tool] + arguments
-  task.launch()
-  task.waitUntilExit()
-
-  let data = pipe.fileHandleForReading.availableData
-  let output = String(data: data, encoding: .utf8) ?? ""
-  return (task.terminationStatus, output)
-}
-
 func latestSnapshot(pathname: String) throws -> (name: String, delete: Bool)
 {
   var delete = false
