@@ -63,7 +63,7 @@ func createMountpoint(under path: String = "/tmp") throws -> String
 }
 
 let output: String
-let mountpoint: String
+var mountpoint = ""
 do {
   let timestamp = try newTimeMachineSnapshot()
   let snapshot = try getTimeMachineSnapshot(pathname: options.pathname, timestamp: timestamp)
@@ -76,6 +76,10 @@ do {
   print(mountpoint)
 }
 catch let error as ExitCode {
+  if !mountpoint.isEmpty
+  {
+    _ = try? FileManager.default.removeItem(atPath: mountpoint)
+  }
   exit(error.rawValue)
 }
 
