@@ -8,6 +8,14 @@ public struct tmsm: ParsableCommand
   public var pathname = "/System/Volumes/Data"
 
   public init() {}
+
+  public mutating func validate() throws
+  {
+    if pathname == "/"
+    {
+      pathname = "/System/Volumes/Data"
+    }
+  }
 }
 
 let options = tmsm.parseOrExit()
