@@ -10,7 +10,8 @@ let package = Package(
   ],
   dependencies: [
     .package(url: "https://github.com/apple/swift-argument-parser", .upToNextMinor(from: "0.3.2")),
-//    .package(url: "https://github.com/apple/swift-system", .upToNextMinor(from: "0.0.1")),
+    .package(url: "https://github.com/apple/swift-algorithms", .branch("main")),
+    // .package(url: "https://github.com/apple/swift-system", .upToNextMinor(from: "0.0.1")),
   ],
   targets: [
     // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -19,6 +20,7 @@ let package = Package(
       name: "tmsm",
       dependencies: [
         .product(name: "ArgumentParser", package: "swift-argument-parser"),
+        .product(name: "Algorithms", package: "swift-algorithms"),
       ]),
     .testTarget(
       name: "tmsmTests",
