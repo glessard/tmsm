@@ -1,77 +1,91 @@
 import Foundation
+import Algorithms
 import ArgumentParser
 
-public struct tmsmOptions: ParsableCommand
+public struct tmsm: ParsableCommand
 {
-  @Argument(help: "mount point of APFS volume to clone")
+  @Argument(help: "location of APFS volume to be snapshot")
   public var pathname = "/System/Volumes/Data"
 
   public init() {}
 }
 
-let options = tmsmOptions.parseOrExit()
+let options = tmsm.parseOrExit()
 
-func latestSnapshot(pathname: String) throws -> (name: String, delete: Bool)
+func newTimeMachineSnapshot() throws -> String
 {
-  var delete = false
-  while true
-  {
-    let (value, output) = launch("/usr/bin/tmutil",
-                                 "listlocalsnapshots",
-                                 pathname)
-    if value != 0
-    {
-      print(output)
-      throw ExitCode(value)
-    }
+  let tmutil = "/usr/bin/tmutil"
+  let output = try launch(command: tmutil, arguments: "localsnapshot")
 
-    if let last = output.split(separator: "\n").last,
-       case let lastSplit = last.split(separator: "."),
-       let timestring = lastSplit.first(where: { $0.allSatisfy({ !$0.isLetter }) })
-    {
-      let formatter = DateFormatter()
-      formatter.locale = Locale(identifier: "en_US_POSIX")
-      formatter.dateFormat = "yyyy-MM-dd-HHmmss"
-      if let timestamp = formatter.date(from: String(timestring))
-      {
-        if Date().timeIntervalSince(timestamp) < 7500
-        {
-          return (String(last), delete)
-        }
-        else
-        {
-          let (value, _) = launch("/usr/bin/tmutil", "localsnapshot")
-          assert(value == 0)
-          delete = true
-        }
-      }
-    }
-  }
+  guard let timestring = output.split(separator: ":").last?.trimming(where: \.isWhitespace)
+  else { throw ExitCode.failure }
+
+  return String(timestring)
 }
 
-let pathname = "/System/Volumes/Data"
-let latest = try latestSnapshot(pathname: pathname)
+func getTimeMachineSnapshot(pathname: String, timestamp: String) throws -> String
+{
+  let tmutil = "/usr/bin/tmutil"
+  let output = try launch(command: tmutil, arguments: "listlocalsnapshots", pathname)
 
-let alphanumerics = Set("abcdefghijklmnopqrstuvwyz0123456789")
-let base = URL(fileURLWithPath: "file:///tmp", isDirectory: true)
-var mountpoint = ""
-repeat {
-  let randomCharacters = (1...8).compactMap { _ in alphanumerics.randomElement() }
-  let candidate = "tmp-\(String(randomCharacters))"
-  let candidateURL = base.appendingPathComponent(candidate, isDirectory: true)
-  do {
-    try FileManager.default.createDirectory(at: candidateURL, withIntermediateDirectories: false, attributes: nil)
-    mountpoint = candidateURL.path
+  guard let snapshot = output.split(separator: "\n").first(where: { $0.contains(timestamp) })
+  else {
+    let message = "No snapshot found for \(pathname) with timestamp \(timestamp)\n"
+    FileHandle.standardError.write(Data(message.utf8))
+    throw ExitCode.failure
   }
-  catch {
-    continue
-  }
-} while mountpoint.isEmpty
 
-let (value, output) = launch("/sbin/mount_apfs",
-                             "-o", "rdonly",
-                             "-s", latest.name,
-                             pathname,
-                             mountpoint)
-print(value)
-print(output)
+  return String(snapshot)
+}
+
+func createMountpoint(under path: String = "/tmp") throws -> String
+{
+  let alphanumerics = Set("abcdefghijklmnopqrstuvwxyz0123456789")
+  let base = URL(fileURLWithPath: path, isDirectory: true)
+  for _ in (1...8)
+  {
+    let randomCharacters = (1...8).compactMap { _ in alphanumerics.randomElement() }
+    let candidate = "tmp-\(String(randomCharacters))"
+    let candidateURL = base.appendingPathComponent(candidate, isDirectory: true)
+    do {
+      try FileManager.default.createDirectory(at: candidateURL,
+                                              withIntermediateDirectories: false,
+                                              attributes: nil)
+      return candidateURL.path
+    }
+    catch {
+      continue
+    }
+  }
+  let message = "Could not create temporary directory under \(base.path)\n"
+  FileHandle.standardError.write(Data(message.utf8))
+  throw ExitCode.failure
+}
+
+let output: String
+let mountpoint: String
+do {
+  let timestamp = try newTimeMachineSnapshot()
+  let snapshot = try getTimeMachineSnapshot(pathname: options.pathname, timestamp: timestamp)
+
+  mountpoint = try createMountpoint()
+  output = try launch(command: "/sbin/mount_apfs",
+                      arguments: "-o", "rdonly",
+                                 "-s", snapshot,
+                                 options.pathname, mountpoint)
+}
+catch let error as ExitCode {
+  exit(error.rawValue)
+}
+
+if output.isEmpty
+{
+  print(mountpoint)
+  exit(EXIT_SUCCESS)
+}
+else
+{
+  print(mountpoint)
+  print("Failure:", output)
+  exit(EXIT_FAILURE)
+}
