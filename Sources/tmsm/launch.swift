@@ -6,7 +6,8 @@ import Foundation
 import struct ArgumentParser.ExitCode
 
 @discardableResult
-func launch(command: String, arguments: String...) throws -> String
+func launch(command: String, arguments: String...,
+            environment: [String: String] = [:]) throws -> String
 {
   let task = Process()
   task.launchPath = "/usr/bin/env"
@@ -14,6 +15,11 @@ func launch(command: String, arguments: String...) throws -> String
   let pipe = Pipe()
   task.standardOutput = pipe
   task.standardError = FileHandle.standardError
+  if !environment.isEmpty
+  {
+    let env = ProcessInfo.processInfo.environment
+    task.environment = env.merging(environment, uniquingKeysWith: { $1 })
+  }
 
   task.arguments = [command] + arguments
   try task.run()
