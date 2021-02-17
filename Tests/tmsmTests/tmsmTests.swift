@@ -16,10 +16,10 @@ final class tmsmTests: XCTestCase
     try process.run()
     process.waitUntilExit()
 
-    let data = pipe.fileHandleForReading.readDataToEndOfFile()
+    let data = pipe.fileHandleForReading.availableData
     let output = String(data: data, encoding: .utf8)
 
-    XCTAssertEqual(output, "Hello, world!\n")
+    XCTAssertEqual(output?.isEmpty, true)
   }
 
   /// Returns path to the built products directory.
