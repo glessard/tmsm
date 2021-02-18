@@ -22,13 +22,13 @@ func newTimeMachineSnapshot() throws -> String
   return String(timestring)
 }
 
-func getTimeMachineSnapshot(pathname: String, timestamp: String) throws -> String
+func getTimeMachineSnapshot(sourceVolume: String, timestamp: String) throws -> String
 {
-  let output = try launch(command: tmutil, arguments: "listlocalsnapshots", pathname)
+  let output = try launch(command: tmutil, arguments: "listlocalsnapshots", sourceVolume)
 
   guard let snapshot = output.split(separator: "\n").first(where: { $0.contains(timestamp) })
   else {
-    let message = "No snapshot found for \(pathname) with timestamp \(timestamp)\n"
+    let message = "No snapshot found for \(sourceVolume) with timestamp \(timestamp)\n"
     FileHandle.standardError.write(Data(message.utf8))
     throw ExitCode.failure
   }

@@ -29,12 +29,12 @@ func createMountpoint(under path: String = "/tmp") throws -> String
   throw ExitCode.failure
 }
 
-func mountSnapshot(snapshot: String, pathname: String, mountpoint: String) throws
+func mountSnapshot(snapshot: String, sourceVolume: String, mountpoint: String) throws
 {
   try launch(command: "/sbin/mount_apfs",
              arguments: ["-o", "rdonly,noexec,nobrowse",
                          "-s", snapshot,
-                         pathname, mountpoint])
+                         sourceVolume, mountpoint])
 }
 
 func unmountSnapshot(from mountpoint: String) throws

@@ -10,12 +10,12 @@ do {
   let mountpoint = try createMountpoint()
   defer { try? removeMountpoint(path: mountpoint) }
 
-  let snapshot = try getTimeMachineSnapshot(pathname: options.pathname, timestamp: timestamp)
-  try mountSnapshot(snapshot: snapshot, pathname: options.pathname, mountpoint: mountpoint)
+  let snapshot = try getTimeMachineSnapshot(sourceVolume: options.sourceVolume, timestamp: timestamp)
+  try mountSnapshot(snapshot: snapshot, sourceVolume: options.sourceVolume, mountpoint: mountpoint)
   defer { try? unmountSnapshot(from: mountpoint) }
 
   try launch(arguments: options.subcommand,
-             environment: ["SNAPSHOTMOUNTPOINT": mountpoint, "SOURCEMOUNTPOINT": options.pathname])
+             environment: ["SNAPSHOTMOUNTPOINT": mountpoint, "SOURCEVOLUME": options.sourceVolume])
 }
 catch let error as ExitCode {
   exit(error.rawValue)
