@@ -12,7 +12,7 @@ func createMountpoint(under path: String = "/tmp") throws -> String
   for _ in (1...8)
   {
     let randomCharacters = (1...8).compactMap { _ in alphanumerics.randomElement() }
-    let candidate = "tmp-\(String(randomCharacters))"
+    let candidate = "tmsm-\(String(randomCharacters))"
     let candidateURL = base.appendingPathComponent(candidate, isDirectory: true)
     do {
       try FileManager.default.createDirectory(at: candidateURL,
