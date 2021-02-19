@@ -10,7 +10,8 @@ public struct tmsm: ParsableCommand
   @Option(help: "location of APFS volume to be snapshot")
   public var sourceVolume = "/System/Volumes/Data"
 
-  @Argument(help: "a subcommand (and arguments) to launch while the snapshot is mounted")
+  @Argument(parsing: .unconditionalRemaining,
+            help: "a subcommand (and arguments) to launch while the snapshot is mounted")
   public var subcommand: [String] = []
 
   public init() {}
