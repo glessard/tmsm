@@ -10,6 +10,7 @@ func launch(command: String, arguments: String...,
 {
   let pipe = Pipe()
   do {
+    defer { try? pipe.fileHandleForWriting.close() }
     try launch(command: command,
                arguments: arguments,
                environment: environment,
